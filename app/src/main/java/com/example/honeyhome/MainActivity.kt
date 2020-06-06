@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.os.Looper
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,7 +12,10 @@ import androidx.databinding.DataBindingUtil
 import com.example.honeyhome.databinding.ActivityMainBinding
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.location.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import timber.log.Timber
 
 
@@ -33,7 +35,7 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
             binding.accuracyTextView.text = locationTracker.accuracy.toString()
 
             Timber.i(
-                "got intent with data: name=" + (intent?.getStringExtra("name"))
+                "got intent with data=%s", (intent?.action.toString())
             )
         }
     }
@@ -41,7 +43,8 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        Timber.plant(Timber.DebugTree())
+        Timber.i("In onCreate()")
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         val activity: MainActivity = this
@@ -56,16 +59,16 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
             }
         }
         registerReceiver(myReceiver, IntentFilter("start_tracking"))
-        locationRequest = LocationRequest.create()
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        mGoogleApiClient = GoogleApiClient.Builder(this)
-            .addConnectionCallbacks(this)
-            .addOnConnectionFailedListener(this)
-            .addApi(LocationServices.API)
-            .build()
+//        locationRequest = LocationRequest.create()
+//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+//        mGoogleApiClient = GoogleApiClient.Builder(this)
+//            .addConnectionCallbacks(this)
+//            .addOnConnectionFailedListener(this)
+//            .addApi(LocationServices.API)
+//            .build()
 //        getLocation()
 
-        var buttonTrackLocation: Button = findViewById(R.id.button_track_location)
+        var buttonTrackLocation: Button = binding.buttonTrackLocation
         locationTracker = LocationTracker(this)
         buttonTrackLocation.setOnClickListener {
             buttonTrackLocationListener(
@@ -105,21 +108,21 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
 
     override fun onResume() {
         super.onResume()
-
-        mGoogleApiClient?.connect();
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
+//
+//        mGoogleApiClient?.connect();
+//        fusedLocationClient.requestLocationUpdates(
+//            locationRequest,
+//            locationCallback,
+//            Looper.getMainLooper()
+//        )
     }
 
 
     override fun onPause() {
         super.onPause()
-        if (mGoogleApiClient?.isConnected()!!) {
-            mGoogleApiClient?.disconnect();
-        }
+//        if (mGoogleApiClient?.isConnected()!!) {
+//            mGoogleApiClient?.disconnect();
+//        }
     }
 
     override fun onConnectionFailed(p0: ConnectionResult) {
