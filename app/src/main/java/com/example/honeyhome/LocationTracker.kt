@@ -24,6 +24,11 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
     var accuracy: Float = 0f
     val activity: MainActivity = activity
     var isTracking: Boolean = false
+    var hasHomeLocation: Boolean = false
+
+    var homeLongtitude: Double = 0.0
+    var homeLatitude: Double = 0.0
+
     private val MY_PERMISSIONS_REQUEST_LOCATION = 99;
     lateinit var fusedLocationClient: FusedLocationProviderClient
     var locationRequest = LocationRequest.create()?.apply {
@@ -52,6 +57,18 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
         sendBroadcast(activity)
     }
 
+    fun setLocationAsHome() {
+        hasHomeLocation = true
+        homeLongtitude = longtitude
+        homeLatitude = latitude
+    }
+
+    fun clearHomeLocation() {
+        hasHomeLocation = false
+        homeLongtitude = 0.0
+        homeLatitude = 0.0
+    }
+
     fun startTracking() {
         Timber.i("In startTracking()")
         if (getPermissionAndTrack()) {
@@ -66,6 +83,10 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
             locationCallback,
             Looper.getMainLooper()
         )
+    }
+
+    fun stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     fun getPermissionAndTrack(): Boolean {
@@ -114,6 +135,7 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
 
     fun stopTracking() {
         isTracking = false
+        sendBroadcast(activity)
     }
 
     override fun onConnected(p0: Bundle?) {

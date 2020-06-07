@@ -1,14 +1,13 @@
 package com.example.honeyhome
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.preference.PreferenceManager
 import com.example.honeyhome.databinding.ActivityMainBinding
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
@@ -34,6 +33,11 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
             binding.latitudeTextView.text = locationTracker.latitude.toString()
             binding.accuracyTextView.text = locationTracker.accuracy.toString()
 
+            if (locationTracker.accuracy < 50) {
+                binding.setHomeLocationButton.visibility = View.VISIBLE
+            } else {
+                binding.setHomeLocationButton.visibility = View.GONE
+            }
             Timber.i(
                 "got intent with data=%s", (intent?.action.toString())
             )
@@ -59,6 +63,15 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
             }
         }
         registerReceiver(myReceiver, IntentFilter("start_tracking"))
+
+        val sp: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val storedLatitude = sp.getDouble("SP_LATITUDE", 0.0)
+        val storedLongtitude = sp.getDouble("SP_LONGTITUDE", 0.0)
+        val editor: SharedPreferences.Editor=sp.edit()
+//        editor.putDouble()
+        editor.apply()
+
+
 //        locationRequest = LocationRequest.create()
 //        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 //        mGoogleApiClient = GoogleApiClient.Builder(this)
@@ -68,13 +81,38 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
 //            .build()
 //        getLocation()
 
-        var buttonTrackLocation: Button = binding.buttonTrackLocation
+
         locationTracker = LocationTracker(this)
-        buttonTrackLocation.setOnClickListener {
-            buttonTrackLocationListener(
-                locationTracker
-            )
+        binding.apply {
+            buttonTrackLocation.setOnClickListener { buttonTrackLocationListener() }
+            setHomeLocationButton.setOnClickListener { setHomeLocationListener() }
+            clearHomeButton.setOnClickListener { clearHomeLocationButtonListener() }
         }
+
+    }
+
+    fun SharedPreferences.Editor.putDouble(key: String, double: Double) =
+        putLong(key, java.lang.Double.doubleToRawLongBits(double))
+
+    fun SharedPreferences.getDouble(key: String, default: Double) =
+        java.lang.Double.longBitsToDouble(
+            getLong(
+                key,
+                java.lang.Double.doubleToRawLongBits(default)
+            )
+        )
+
+    fun clearHomeLocationButtonListener() {
+        locationTracker.clearHomeLocation()
+        binding.homeLocationGeoView.text = "Home location not set"
+        binding.clearHomeButton.visibility = View.GONE
+    }
+
+    fun setHomeLocationListener() {
+        locationTracker.setLocationAsHome()
+        binding.homeLocationGeoView.text =
+            "(${locationTracker.homeLatitude}[lat], ${locationTracker.homeLongtitude}[long])"
+
     }
 
 //    private fun getLocation() {
@@ -88,7 +126,7 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
 //    }
 
 
-    fun buttonTrackLocationListener(locationTracker: LocationTracker) {
+    fun buttonTrackLocationListener() {
         var trackingButton = findViewById<Button>(R.id.button_track_location)
         if (locationTracker.isTracking) {
             locationTracker.stopTracking()
