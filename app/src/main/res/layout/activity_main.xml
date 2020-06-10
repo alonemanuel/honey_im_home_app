@@ -52,7 +52,7 @@
                         android:id="@+id/latitude_text_view"
                         android:layout_width="135dp"
                         android:layout_height="wrap_content"
-                        android:text="TextView"
+                        android:text="-"
                         android:textAlignment="center" />
                 </LinearLayout>
 
@@ -75,7 +75,7 @@
                         android:id="@+id/longtitude_text_view"
                         android:layout_width="136dp"
                         android:layout_height="wrap_content"
-                        android:text="TextView"
+                        android:text="-"
                         android:textAlignment="center" />
                 </LinearLayout>
 
@@ -96,7 +96,7 @@
                         android:id="@+id/accuracy_text_view"
                         android:layout_width="136dp"
                         android:layout_height="wrap_content"
-                        android:text="TextView"
+                        android:text="-"
                         android:textAlignment="center" />
                 </LinearLayout>
 
@@ -142,7 +142,7 @@
                 android:id="@+id/home_location_geo_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="TextView"
+                android:text="Home location not set"
                 app:layout_constraintBottom_toBottomOf="@+id/home_location_label"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -157,6 +157,7 @@
                 app:layout_constraintBottom_toBottomOf="@+id/clear_home_button"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
+                android:visibility="invisible"
                 app:layout_constraintStart_toEndOf="@+id/clear_home_button"
                 app:layout_constraintTop_toTopOf="@+id/clear_home_button" />
 
@@ -165,6 +166,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Clear Home"
+                android:visibility="invisible"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/set_home_location_button"
                 app:layout_constraintHorizontal_bias="0.5"

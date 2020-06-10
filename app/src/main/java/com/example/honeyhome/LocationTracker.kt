@@ -1,12 +1,13 @@
 package com.example.honeyhome
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
-import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
@@ -17,12 +18,12 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices.getFusedLocationProviderClient
 import timber.log.Timber
 
-class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallbacks,
+
+class LocationTracker(var activity: MainActivity) : GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener {
     var longtitude: Double = 0.0
     var latitude: Double = 0.0
     var accuracy: Float = 0f
-    val activity: MainActivity = activity
     var isTracking: Boolean = false
     var hasHomeLocation: Boolean = false
 
@@ -38,6 +39,7 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
     }
     var locationCallback: LocationCallback
 
+
     init {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
@@ -48,6 +50,10 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
             }
         }
     }
+//
+//    protected fun LocationTracker(parcel: Parcel) {
+//
+//    }
 
     fun updateLocation(location: Location) {
         longtitude = location.longitude
@@ -57,7 +63,7 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
         sendBroadcast(activity)
     }
 
-    fun setLocationAsHome() {
+    fun setHomeLocation(latitude: Double, longtitude: Double) {
         hasHomeLocation = true
         homeLongtitude = longtitude
         homeLatitude = latitude
@@ -94,35 +100,82 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
             activity, android.Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        if (hasLocationPermission) {
-            Timber.i("Permission granted")
-            fusedLocationClient = getFusedLocationProviderClient(activity)
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    // Got last known location. In some rare situations this can be null.
-                    if (location == null) {
-                        Timber.i(
-                            "Location is null for some reason"
-                        )
-                    } else {
-                        updateLocation(location)
+        when {
+            hasLocationPermission -> {
+                fusedLocationClient = getFusedLocationProviderClient(activity)
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        // Got last known location. In some rare situations this can be null.
+                        if (location == null) {
+                            Timber.i(
+                                "Location is null for some reason"
+                            )
+                        } else {
+                            updateLocation(location)
+                        }
                     }
-                }
-            return true
+                return true
+            }
 
-        } else {
-            val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
-            ActivityCompat.requestPermissions(
+            ActivityCompat.shouldShowRequestPermissionRationale(
                 activity,
-                permissions,
-                MY_PERMISSIONS_REQUEST_LOCATION
-            )
-            Toast.makeText(activity, "Permission denied", Toast.LENGTH_LONG).show()
-            return false
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) -> {
+                begForPermissions()
+                return false
+            }
+            else -> {
+
+                requestPermissionsWrapper()
+                return false
+            }
 
         }
     }
 
+    fun requestPermissionsWrapper() {
+        val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        ActivityCompat.requestPermissions(
+            activity,
+            permissions,
+            MY_PERMISSIONS_REQUEST_LOCATION
+        )
+    }
+
+    fun begForPermissions() {
+
+        val builder1 =
+            AlertDialog.Builder(activity)
+        builder1.setMessage("We need your permission to let us track your location. We promise we won't do anything else with it!")
+        builder1.setCancelable(true)
+
+        builder1.setPositiveButton(
+            "OK"
+        ) { dialog, id -> requestPermissionsWrapper() }
+
+        builder1.setNegativeButton(
+            "NO THANKS"
+        ) { dialog, id -> dialog.cancel() }
+
+        val alert11 = builder1.create()
+        alert11.show()
+
+//
+//        var result: Boolean = false
+//        val builder: AlertDialog.Builder =
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//                AlertDialog.Builder(activity, android.R.style.Theme_Material_Dialog_Alert)
+//            } else {
+//                AlertDialog.Builder(activity)
+//            }
+//        builder.setTitle("Permissions needed")
+//            .setMessage("We need your permission to let us track your location. We promise we won't do anything else with it!")
+//            .setPositiveButton("OK") { dialog, which -> result = true }
+//            .setNegativeButton("NO THANKS") { dialog, which -> result = false }
+//            .setIcon(R.drawable.ic_launcher_foreground)
+//            .show()
+//        return result
+    }
 
     fun sendBroadcast(context: Context) {
         Timber.i("Sending broadcast")
@@ -135,6 +188,7 @@ class LocationTracker(activity: MainActivity) : GoogleApiClient.ConnectionCallba
 
     fun stopTracking() {
         isTracking = false
+        fusedLocationClient.removeLocationUpdates(locationCallback)
         sendBroadcast(activity)
     }
 

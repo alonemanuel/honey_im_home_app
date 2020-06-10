@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">HoneyHome</string>
+    <string name="SP_LATITUDE">SP_LATITUDE</string>
+    <string name="SP_LONGTITUDE">SP_LONGTITUDE</string>
+    <string name="SP_HOMEFLAG">SP_HOMEFLAG</string>
+    <string name="SP_ACCURACY">SP_ACCURACY</string>
 </resources>
