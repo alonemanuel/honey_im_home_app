@@ -1,16 +1,22 @@
 package com.example.honeyhome
 
+import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.InputType
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.preference.PreferenceManager
 import com.example.honeyhome.databinding.ActivityMainBinding
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
+import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
 
 
@@ -26,6 +32,8 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
             onReceiveBroadcast(context, intent)
         }
     }
+
+    val smsReceiver = LocalSendSmsBroadcastReceiver(this)
 
     fun onReceiveBroadcast(context: Context?, intent: Intent?) {
         if (locationTracker.isTracking) {
@@ -66,6 +74,10 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
         editor = sp.edit()
 
         registerReceiver(myReceiver, IntentFilter("start_tracking"))
+        registerReceiver(smsReceiver, IntentFilter("POST_PC.ACTION_SEND_SMS"))
+
+        initSharedPref()
+
         val storedLatitude = sp.getDouble(getString(R.string.SP_LATITUDE), 0.0)
         val storedLongtitude = sp.getDouble(getString(R.string.SP_LONGTITUDE), 0.0)
         val storedHomeSetFlag = sp.getBoolean(getString(R.string.SP_HOMEFLAG), false)
@@ -93,8 +105,125 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
             buttonTrackLocation.setOnClickListener { buttonTrackLocationListener() }
             setHomeLocationButton.setOnClickListener { setHomeLocationListener() }
             clearHomeButton.setOnClickListener { clearHomeLocationButtonListener() }
+            setSmsButton.setOnClickListener { setSmsButtonListener() }
+            testSmsButton.setOnClickListener { testSmsButtonListener() }
         }
 
+    }
+
+    fun initSharedPref() {
+        if (sp.contains(getString(R.string.SP_SMS_NUMBER))) {
+            val smsNumber = sp.getString(getString(R.string.SP_SMS_NUMBER), "0")
+            binding.apply {
+                phone_label.text = smsNumber
+                testSmsButton.visibility = View.VISIBLE
+            }
+        }
+
+    }
+
+    fun testSmsButtonListener() {
+        val intent = Intent()
+
+        intent.action = "POST_PC.ACTION_SEND_SMS"
+        val number = sp.getString("SP_SMS_NUMBER", "0")
+        val message = "Honey I'm Sending a Test Message!"
+        intent.putExtra("sp_number", number)
+        intent.putExtra("sp_message", message)
+        this.sendBroadcast(intent)
+    }
+
+
+    fun getPermissionAndSetSMS(): Boolean {
+        val hasSMSPermission: Boolean = ActivityCompat.checkSelfPermission(
+            this, android.Manifest.permission.SEND_SMS
+        ) == PackageManager.PERMISSION_GRANTED
+
+        when {
+            hasSMSPermission -> {
+                return true
+            }
+
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                this, Manifest.permission.SEND_SMS
+            ) -> {
+                begForSMSPermissions()
+                return false
+            }
+            else -> {
+
+                requestSMSPermissionsWrapper()
+                return false
+            }
+
+        }
+    }
+
+    fun requestSMSPermissionsWrapper() {
+        val permissions = arrayOf(Manifest.permission.SEND_SMS)
+        ActivityCompat.requestPermissions(
+            this,
+            permissions,
+            100
+        )
+    }
+
+    fun begForSMSPermissions() {
+
+        val builder1 =
+            AlertDialog.Builder(this)
+        builder1.setMessage("We need your permission to let us send an SMS. We promise we won't do anything else with it!")
+        builder1.setCancelable(true)
+
+        builder1.setPositiveButton(
+            "OK"
+        ) { dialog, id -> requestSMSPermissionsWrapper() }
+
+        builder1.setNegativeButton(
+            "NO THANKS"
+        ) { dialog, id -> dialog.cancel() }
+
+        val alert11 = builder1.create()
+        alert11.show()
+    }
+
+    fun setSmsButtonListener() {
+        if (getPermissionAndSetSMS()) {
+            showSetNumberDialog()
+        }
+
+    }
+
+    fun showSetNumberDialog() {
+        val alert: AlertDialog.Builder = AlertDialog.Builder(this)
+
+        alert.setTitle("Enter your phone number")
+        alert.setMessage("phone number:")
+
+// Set an EditText view to get user input
+
+// Set an EditText view to get user input
+        val input = EditText(this)
+        input.inputType = InputType.TYPE_CLASS_PHONE
+        alert.setView(input)
+
+        alert.setPositiveButton("Ok",
+            DialogInterface.OnClickListener { dialog, whichButton ->
+                val value: String = input.text.toString()
+                editor.putString(getString(R.string.SP_SMS_NUMBER), value)
+                editor.apply()
+                binding.testSmsButton.visibility = View.VISIBLE
+                binding.phoneLabel.text = value
+                // Do something with value!
+
+            })
+
+        alert.setNegativeButton("Cancel",
+            DialogInterface.OnClickListener { dialog, whichButton ->
+                // Canceled.
+            })
+
+        alert.show()
     }
 
     fun SharedPreferences.Editor.putDouble(key: String, double: Double) =
@@ -171,9 +300,18 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Permission granted", Toast.LENGTH_LONG).show()
-            locationTracker.startTracking()
+            when (requestCode) {
+                99 -> {
+                    locationTracker.startTracking()
+                }
+                100 -> {
+                    showSetNumberDialog()
+                }
+            }
         } else {
             Toast.makeText(this, "Permission denied", Toast.LENGTH_LONG).show()
         }

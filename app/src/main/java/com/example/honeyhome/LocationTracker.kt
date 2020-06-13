@@ -159,22 +159,6 @@ class LocationTracker(var activity: MainActivity) : GoogleApiClient.ConnectionCa
 
         val alert11 = builder1.create()
         alert11.show()
-
-//
-//        var result: Boolean = false
-//        val builder: AlertDialog.Builder =
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//                AlertDialog.Builder(activity, android.R.style.Theme_Material_Dialog_Alert)
-//            } else {
-//                AlertDialog.Builder(activity)
-//            }
-//        builder.setTitle("Permissions needed")
-//            .setMessage("We need your permission to let us track your location. We promise we won't do anything else with it!")
-//            .setPositiveButton("OK") { dialog, which -> result = true }
-//            .setNegativeButton("NO THANKS") { dialog, which -> result = false }
-//            .setIcon(R.drawable.ic_launcher_foreground)
-//            .show()
-//        return result
     }
 
     fun sendBroadcast(context: Context) {
