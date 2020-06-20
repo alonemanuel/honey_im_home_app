@@ -13,6 +13,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.preference.PreferenceManager
+import androidx.work.Constraints
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
 import com.example.honeyhome.databinding.ActivityMainBinding
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
@@ -268,6 +271,14 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
             locationTracker.stopTracking()
             trackingButton.text = "Start Tracking Location"
         } else {
+
+            var periodicRequest= PeriodicWorkRequest.Builder(LocationWork::class.java, 15, TimeUnit.MINUTES)
+                .setConstraints(Constraints.NONE)
+                .build()
+            val workManager = WorkManager.getInstance(this)
+            workManager.enqueue(periodicRequest)
+
+
             locationTracker.startTracking()
         }
 

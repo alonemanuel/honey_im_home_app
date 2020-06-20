@@ -52,7 +52,7 @@ class LocalSendSmsBroadcastReceiver(var activity: MainActivity) : BroadcastRecei
             var ntfc: Notification =
                 NotificationCompat.Builder(context!!, "73")
                     .setSmallIcon(R.drawable.common_google_signin_btn_icon_dark)
-                    .setContentTitle("bla bla notif")
+                    .setContentTitle("Sending SMS to ${NUMBER}: ${CONTENT}")
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT).build()
             var notifId = 5364
             NotificationManagerCompat.from(context).notify(notifId, ntfc)
