@@ -1,5 +1,6 @@
 package com.example.honeyhome
 
+import MyWorker
 import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
@@ -14,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.preference.PreferenceManager
 import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.example.honeyhome.databinding.ActivityMainBinding
@@ -21,6 +23,7 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : GoogleApiClient.ConnectionCallbacks,
@@ -272,11 +275,16 @@ class MainActivity : GoogleApiClient.ConnectionCallbacks,
             trackingButton.text = "Start Tracking Location"
         } else {
 
-            var periodicRequest= PeriodicWorkRequest.Builder(LocationWork::class.java, 15, TimeUnit.MINUTES)
-                .setConstraints(Constraints.NONE)
-                .build()
+            var periodicRequest =
+                PeriodicWorkRequest.Builder(MyWorker::class.java, 15, TimeUnit.MINUTES)
+                    .setConstraints(Constraints.NONE)
+                    .build()
             val workManager = WorkManager.getInstance(this)
-            workManager.enqueue(periodicRequest)
+            workManager.enqueueUniquePeriodicWork(
+                "WORK_LOCATION",
+                ExistingPeriodicWorkPolicy.REPLACE,
+                periodicRequest
+            )
 
 
             locationTracker.startTracking()
